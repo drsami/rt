@@ -57,6 +57,28 @@ line, or remove the PerlTaintCheck parameter from your mod_perl
 configuration.
 EOT
 
+    my $handler;
+    # Plack::Handler::Apache2 masks MOD_PERL, so use MOD_PERL_API_VERSION
+    if( $ENV{MOD_PERL_API_VERSION}
+        and $ENV{MOD_PERL_API_VERSION} == 2){
+
+        eval{
+            require Apache2::RequestRec;
+            $handler = Apache2::RequestRec->handler();
+        };
+    }
+
+    die <<MODPERL if defined $handler && $handler eq 'perl-script';
+RT has problems when SetHandler is set to perl-script.
+Change SetHandler in your in httpd.conf to:
+
+    SetHandler modperl
+
+For more information, see:
+
+    perldoc docs/web_deployment.pod
+MODPERL
+
     require File::Spec;
     my @libs = ("@RT_LIB_PATH@", "@LOCAL_LIB_PATH@");
     my $bin_path;
@@ -99,7 +121,7 @@ my ($integrity, $state, $msg) = RT::Handle->CheckIntegrity;
 
 unless ( $integrity ) {
     print STDERR <<EOF;
-    
+
 RT couldn't connect to the database where tickets are stored.
 If this is a new installation of RT, you should visit the URL below
 to configure RT and initialize your database.
@@ -252,7 +274,7 @@ sub handle_bind_error {
 
     print STDERR <<EOF;
 WARNING: RT couldn't start up a web server on port @{[$port]}.
-This is often the case if the port is already in use or you're running @{[$0]} 
+This is often the case if the port is already in use or you're running @{[$0]}
 as someone other than your system's "root" user.  You may also specify a
 temporary port with: $0 --port <port>
 EOF
