@@ -2044,6 +2044,11 @@ sub LimitField {
         )
         if ( !defined $args{'DESCRIPTION'} );
 
+
+    if ($self->_isLimited > 1) {
+        RT->Deprecated( Message => "Mixing old-style LimitFoo methods with Limit is deprecated" );
+    }
+
     my $index = $self->_NextIndex;
 
 # make the TicketRestrictions hash the equivalent of whatever we just passed in;
