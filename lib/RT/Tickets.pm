@@ -2009,16 +2009,27 @@ sub OrderByCols {
 }
 
 
+sub Limit {
+    my $self = shift;
+    $self->{'must_redo_search'} = 1;
+    delete $self->{'raw_rows'};
+    delete $self->{'count_all'};
+    if ($self->{'restriction_index'} > 1) {
+        RT->Deprecated( Message => "Mixing old-style LimitFoo methods with Limit is deprecated" );
+        $self->LimitField(@_);
+    }
+    $self->SUPER::Limit(@_);
+}
 
 
-=head2 Limit
+=head2 LimitField
 
 Takes a paramhash with the fields FIELD, OPERATOR, VALUE and DESCRIPTION
 Generally best called from LimitFoo methods
 
 =cut
 
-sub Limit {
+sub LimitField {
     my $self = shift;
     my %args = (
         FIELD       => undef,
@@ -2090,7 +2101,7 @@ sub LimitQueue {
 
     #TODO check for a valid queue here
 
-    $self->Limit(
+    $self->LimitField(
         FIELD       => 'Queue',
         VALUE       => $args{'VALUE'},
         OPERATOR    => $args{'OPERATOR'},
@@ -2122,7 +2133,7 @@ sub LimitStatus {
         OPERATOR => '=',
         @_
     );
-    $self->Limit(
+    $self->LimitField(
         FIELD       => 'Status',
         VALUE       => $args{'VALUE'},
         OPERATOR    => $args{'OPERATOR'},
@@ -2208,12 +2219,12 @@ sub LimitType {
         VALUE    => undef,
         @_
     );
-    $self->Limit(
+    $self->LimitField(
         FIELD       => 'Type',
         VALUE       => $args{'VALUE'},
         OPERATOR    => $args{'OPERATOR'},
         DESCRIPTION => join( ' ',
-            $self->loc('Type'), $args{'OPERATOR'}, $args{'Limit'}, ),
+            $self->loc('Type'), $args{'OPERATOR'}, $args{'VALUE'}, ),
     );
 }
 
@@ -2232,7 +2243,7 @@ VALUE is a string to search for in the subject of the ticket.
 sub LimitSubject {
     my $self = shift;
     my %args = (@_);
-    $self->Limit(
+    $self->LimitField(
         FIELD       => 'Subject',
         VALUE       => $args{'VALUE'},
         OPERATOR    => $args{'OPERATOR'},
@@ -2261,7 +2272,7 @@ sub LimitId {
         @_
     );
 
-    $self->Limit(
+    $self->LimitField(
         FIELD       => 'id',
         VALUE       => $args{'VALUE'},
         OPERATOR    => $args{'OPERATOR'},
@@ -2283,7 +2294,7 @@ VALUE is a value to match the ticket's priority against
 sub LimitPriority {
     my $self = shift;
     my %args = (@_);
-    $self->Limit(
+    $self->LimitField(
         FIELD       => 'Priority',
         VALUE       => $args{'VALUE'},
         OPERATOR    => $args{'OPERATOR'},
@@ -2307,7 +2318,7 @@ VALUE is a value to match the ticket's initial priority against
 sub LimitInitialPriority {
     my $self = shift;
     my %args = (@_);
-    $self->Limit(
+    $self->LimitField(
         FIELD       => 'InitialPriority',
         VALUE       => $args{'VALUE'},
         OPERATOR    => $args{'OPERATOR'},
@@ -2330,7 +2341,7 @@ VALUE is a value to match the ticket's final priority against
 sub LimitFinalPriority {
     my $self = shift;
     my %args = (@_);
-    $self->Limit(
+    $self->LimitField(
         FIELD       => 'FinalPriority',
         VALUE       => $args{'VALUE'},
         OPERATOR    => $args{'OPERATOR'},
@@ -2353,7 +2364,7 @@ VALUE is a value to match the ticket's TimeWorked attribute
 sub LimitTimeWorked {
     my $self = shift;
     my %args = (@_);
-    $self->Limit(
+    $self->LimitField(
         FIELD       => 'TimeWorked',
         VALUE       => $args{'VALUE'},
         OPERATOR    => $args{'OPERATOR'},
@@ -2376,7 +2387,7 @@ VALUE is a value to match the ticket's TimeLeft attribute
 sub LimitTimeLeft {
     my $self = shift;
     my %args = (@_);
-    $self->Limit(
+    $self->LimitField(
         FIELD       => 'TimeLeft',
         VALUE       => $args{'VALUE'},
         OPERATOR    => $args{'OPERATOR'},
@@ -2401,7 +2412,7 @@ VALUE is a string to search for in the body of the ticket
 sub LimitContent {
     my $self = shift;
     my %args = (@_);
-    $self->Limit(
+    $self->LimitField(
         FIELD       => 'Content',
         VALUE       => $args{'VALUE'},
         OPERATOR    => $args{'OPERATOR'},
@@ -2424,7 +2435,7 @@ VALUE is a string to search for in the body of the ticket
 sub LimitFilename {
     my $self = shift;
     my %args = (@_);
-    $self->Limit(
+    $self->LimitField(
         FIELD       => 'Filename',
         VALUE       => $args{'VALUE'},
         OPERATOR    => $args{'OPERATOR'},
@@ -2446,7 +2457,7 @@ VALUE is a content type to search ticket attachments for
 sub LimitContentType {
     my $self = shift;
     my %args = (@_);
-    $self->Limit(
+    $self->LimitField(
         FIELD       => 'ContentType',
         VALUE       => $args{'VALUE'},
         OPERATOR    => $args{'OPERATOR'},
@@ -2479,7 +2490,7 @@ sub LimitOwner {
     $owner->Load( $args{'VALUE'} );
 
     # FIXME: check for a valid $owner
-    $self->Limit(
+    $self->LimitField(
         FIELD       => 'Owner',
         VALUE       => $args{'VALUE'},
         OPERATOR    => $args{'OPERATOR'},
@@ -2520,7 +2531,7 @@ sub LimitWatcher {
         $watcher_type = "Watcher";
     }
 
-    $self->Limit(
+    $self->LimitField(
         FIELD       => $watcher_type,
         VALUE       => $args{'VALUE'},
         OPERATOR    => $args{'OPERATOR'},
@@ -2556,7 +2567,7 @@ sub LimitLinkedTo {
         @_
     );
 
-    $self->Limit(
+    $self->LimitField(
         FIELD       => 'LinkedTo',
         BASE        => undef,
         TARGET      => $args{'TARGET'},
@@ -2599,7 +2610,7 @@ sub LimitLinkedFrom {
     my $type = $args{'TYPE'};
     $type = $fromToMap{$type} if exists( $fromToMap{$type} );
 
-    $self->Limit(
+    $self->LimitField(
         FIELD       => 'LinkedTo',
         TARGET      => undef,
         BASE        => $args{'BASE'},
@@ -2721,7 +2732,7 @@ sub LimitDate {
             . $args{'VALUE'} . " GMT";
     }
 
-    $self->Limit(%args);
+    $self->LimitField(%args);
 
 }
 
@@ -2795,7 +2806,7 @@ sub LimitTransactionDate {
             . $args{'VALUE'} . " GMT";
     }
 
-    $self->Limit(%args);
+    $self->LimitField(%args);
 
 }
 
@@ -2869,7 +2880,7 @@ sub LimitCustomField {
     @rest = ( ENTRYAGGREGATOR => 'AND' )
         if ( $CF->Type eq 'SelectMultiple' );
 
-    $self->Limit(
+    $self->LimitField(
         VALUE => $args{VALUE},
         FIELD => "CF"
             .(defined $args{'QUEUE'}? ".{$args{'QUEUE'}}" : '' )
